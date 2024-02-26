@@ -14,6 +14,7 @@ import AVFoundation
 class ViewModel {
     private var size: Float = 1
     private var textY = 1.4
+    private var soundManager = SoundManager()
     private var contentEntity = Entity()
     private let colors: [SimpleMaterial.Color] = [
         .gray, 
@@ -28,8 +29,6 @@ class ViewModel {
         .magenta,
         .white
     ]
-    
-    private var soundManager = SoundManager()
 
     func setupContentEntity() -> Entity {
         return contentEntity
@@ -50,7 +49,6 @@ class ViewModel {
         
         
         entity.name = name
-
         entity.components.set(InputTargetComponent(allowedInputTypes: .indirect))
         entity.components.set(HoverEffectComponent())
         
@@ -157,6 +155,18 @@ class ViewModel {
 //        print("\n\n\n\n\n")
         if let colors = getColorsFromModelEntity(modelEntity: _entity) as? SimpleMaterial {
             if("\(colors.color.tint)".contains("1 0 0 1")) {
+                let textMeshResource: MeshResource = .generateText("+1",
+                                                                           extrusionDepth: 0.05,
+                                                                           font: .systemFont(ofSize: 0.4),
+                                                                           containerFrame: .zero,
+                                                                           alignment: .center,
+                                                                           lineBreakMode: .byWordWrapping)
+                let material = UnlitMaterial(color: .white)
+                let textEntity = ModelEntity(mesh: textMeshResource, materials: [material])
+                
+                textEntity.position = _entity.position
+                contentEntity.addChild(textEntity)
+                
                 soundManager.playAudio(fileName: "touch")
                 bgmManager.playBGM()
                 let fadeOut = FromToByAnimation<Transform>(
@@ -169,14 +179,10 @@ class ViewModel {
                         )
                 let fadeOutAnimation = try! AnimationResource
                             .generate(with: fadeOut)
-                
+    
                 let animation = try! AnimationResource.sequence(with: [fadeOutAnimation])
 
                 _entity.playAnimation(animation, transitionDuration: 0.3)
-//                let audioFileURL = URL(fileURLWithPath: "./Assets.xcassets/touch.mp3")
-//                let audioPlayer = try! AVAudioPlayer(contentsOf: audioFileURL)
-//                audioPlayer.play()
-//                _entity.removeFromParent()
                 return true
             }
             _entity.model?.mesh = .generateBox(size: 2, cornerRadius: 9999)
